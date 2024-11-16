@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Socket.IO Chat Test Client</title>
+    <script src="https://cdn.socket.io/4.0.1/socket.io.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+            text-align: center;
+        }
+        #messages {
+            margin-top: 20px;
+            height: 300px;
+            overflow-y: auto;
+            border: 1px solid #ccc;
+            padding: 10px;
+            background-color: #f9f9f9;
+        }
+        input, button {
+            margin-top: 10px;
+            padding: 10px;
+            width: 80%;
+        }
+        #sendBtn {
+            width: auto;
+        }
+        p {
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>Chat Room Test Client</h1>
+
+    <!-- 방 제목 입력 필드 추가 -->
+    <input type="text" id="titleInput" placeholder="Enter room title" />
+
+    <div>
+        <button id="createRoomBtn">Create & Join Room</button>
+    </div>
+
+    <div id="roomInfo"></div>
+
+    <div id="messages"></div>
+
+    <input type="text" id="messageInput" placeholder="Type your message" />
+    <button id="sendBtn">Send</button>
+
+    <script>
+        const socket = io("http://localhost:3000", { path: "/bot" });
+
+        const messagesDiv = document.getElementById("messages");
+        const messageInput = document.getElementById("messageInput");
+        const titleInput = document.getElementById("titleInput"); 
+        const roomInfoDiv = document.getElementById("roomInfo");
+
+        let currentRoomId = null;
+
+        document.getElementById("createRoomBtn").addEventListener("click", () => {
+            const roomTitle = titleInput.value.trim();
+            if (!roomTitle) {
+                logMessage("⚠️ Please enter a room title.");
+                return;
+            }
+
+            console.log(`Creating a new room...`);
+            socket.emit("create room", { title: roomTitle }); 
+        });
+
+        // 방 생성 후 자동 참가 처리
+        socket.on("room created", (data) => {
+            currentRoomId = data.cr_id; 
+            console.log(`Room created with ID: ${currentRoomId} and title: ${data.title}`);
+
+            // 생성된 방에 참가 요청
+            socket.emit("join room", { cr_id: currentRoomId });
+        });
+
+        // 방 참가 성공 응답 처리
+        socket.on("room joined", (data) => {
+            roomInfoDiv.innerHTML = `<p>Joined Room: ${data.cr_id} - ${data.title}</p>`;
+            logMessage(`✅ Successfully joined room: ${data.cr_id}`);
+        });
+
+        document.getElementById("sendBtn").addEventListener("click", () => {
+            const msg = messageInput.value.trim();
+            if (msg && currentRoomId) {
+                console.log(`Sending message: ${msg}`);
+                socket.emit("chat message", { roomId: currentRoomId, msg });
+                logMessage(`🧑‍💻 You: ${msg}`);
+                messageInput.value = ""; 
+            } else {
+                logMessage("⚠️ Please enter a message and ensure you're in a room.");
+            }
+        });
+
+        socket.on("chat message", (data) => {
+            console.log("Received message from AI Bot:", data);
+            logMessage(`🤖 AI Bot: ${data.answer}`);
+        });
+
+        socket.on("error", (error) => {
+            console.error("Socket error:", error);
+            logMessage(`❌ Error: ${error.message || error}`);
+        });
+
+        function logMessage(message) {
+            const p = document.createElement("p");
+            p.textContent = message;
+            messagesDiv.appendChild(p);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+    </script>    
+</body>
+</html>
