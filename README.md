@@ -1,3 +1,1 @@
-# ChatBot
-
-사용자의 궁금증을 풀어줄 챗봇입니다.
+# CoreServer
