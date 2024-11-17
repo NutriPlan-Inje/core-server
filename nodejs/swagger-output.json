@@ -1,0 +1,616 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "My API",
+    "description": "Description",
+    "version": "1.0.0"
+  },
+  "host": "localhost:8080",
+  "basePath": "/",
+  "schemes": [
+    "http"
+  ],
+  "paths": {
+    "/node/dietPlan/{u_id}/{date}": {
+      "get": {
+        "tags": ["Diet Plan"],  
+        "summary": "Get diet plan by user ID and date",
+        "parameters": [
+          {
+            "name": "u_id",
+            "in": "path",
+            "description": "ID of the user (Explain : 4)",
+            "required": true,
+            "type": "integer"
+          },
+          {
+            "name": "date",
+            "in": "path",
+            "description": "Date to retrieve diet plan (Explain : 2024-09-24)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved diet plan",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "integer",
+                  "example": 200
+                },
+                "message": {
+                  "type": "string",
+                  "example": "성공적으로 조회했습니다"
+                },
+                "data": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "integer",
+                        "example": 4
+                      },
+                      "user_id": {
+                        "type": "integer",
+                        "example": 4
+                      },
+                      "food_id": {
+                        "type": "integer",
+                        "example": 4
+                      },
+                      "date": {
+                        "type": "string",
+                        "example": "2024-09-24"
+                      },
+                      "mealTime": {
+                        "type": "integer",
+                        "example": 1
+                      }
+                    }
+                  },
+                  "example": [
+                    {
+                      "id": 4,
+                      "user_id": 4,
+                      "food_id": 4,
+                      "date": "2024-09-24",
+                      "mealTime": 1
+                    },
+                    {
+                      "id": 11,
+                      "user_id": 4,
+                      "food_id": 5,
+                      "date": "2024-09-24",
+                      "mealTime": 2
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/node/dietPlan/{id}": {
+      "delete": {
+        "tags": ["Diet Plan"],  
+        "summary": "Delete diet plan by dietPlanID",
+        "parameters": [
+          {
+            "name": "dietPlanID",
+            "in": "path",
+            "description": "dietPlanID to delete diet plan",
+            "required": true,
+            "schema": {
+              "type": "object"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully delete diet plan",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "integer",
+                  "example": 200
+                },
+                "message": {
+                  "type": "string",
+                  "example": "삭제가 완료되었습니다."
+                },
+                "data": {
+
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+
+    "/node/foodInfo/{f_id}": {
+      "get": {
+        "tags": ["Food Info"],  
+        "summary": "Get food information by food ID",
+        "parameters": 
+          {
+            "name": "foodId",
+            "in": "path",
+            "description": "Date to retrieve diet plan (Explain : 2024-09-24)",
+            "required": true,
+            "schema": {
+              "type": "object"
+            }
+          },
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved diet plan",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "integer",
+                  "example": 200
+                },
+                "message": {
+                  "type": "string",
+                  "example": "성공적으로 조회했습니다"
+                },
+                "data": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "integer",
+                      "example": 4
+                    },
+                    "foodName": {
+                      "type": "string",
+                      "example": "삼겹살"
+                    },
+                    "kcal": {
+                      "type": "integer",
+                      "example": 250
+                    },
+                    "carbohydrate": {
+                      "type": "integer",
+                      "example": 0
+                    },
+                    "protein": {
+                      "type": "integer",
+                      "example": 22
+                    },
+                    "fat": {
+                      "type": "integer",
+                      "example": 18
+                    },
+                    "category": {
+                      "type": "string",
+                      "example": "육류"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+
+    "/node/foodInfo/{:f_id}": {
+      "delete": {
+        "tags": ["Food Info"],  
+        "summary": "Delete food information by food ID (얘는 안 쓸 듯)",
+        "parameters": 
+          {
+            "name": "f_id",
+            "in": "path",
+            "description": "ID of the food(Explain : 4)",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+        "responses": {
+          "200": {
+            "description": "Successfully delete food information",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "integer",
+                  "example": 200
+                },
+                "message": {
+                  "type": "string",
+                  "example": "삭제가 완료되었습니다"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/node/macronutrientRatio/day/{u_id}/{date}": {
+      "get": {
+        "tags": ["Macronutrient Ratio"],
+        "summary": "Get macronutrient ratio by user ID and date for a day",
+        "parameters": [
+          {
+            "name": "u_id",
+            "in": "path",
+            "description": "ID of the user (Example: 4)",
+            "required": true,
+            "type": "integer"
+          },
+          {
+            "name": "date",
+            "in": "path",
+            "description": "Date to calculate macronutrient ratio (Explain : 2024-09-24)",
+            "required": true,
+            "schema": {
+              "type": "object"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully calculated macronutrient ratio",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "integer",
+                  "example": 200
+                },
+                "message": {
+                  "type": "string",
+                  "example": "계산을 완료했습니다"
+                },
+                "data": {
+                  "type": "object",
+                  "properties": {
+                    "date": {
+                      "type": "string",
+                      "example": "2024-09-24"
+                    },
+                    "macronutrient": {
+                      "type": "object",
+                      "properties": {
+                        "carbohydrate": {
+                          "type": "integer",
+                          "example": 77
+                        },
+                        "protein": {
+                          "type": "integer",
+                          "example": 85
+                        },
+                        "fat": {
+                          "type": "integer",
+                          "example": 53
+                        }
+                      }
+                    },
+                    "macronutrientRatio": {
+                      "type": "object",
+                      "properties": {
+                        "carbohydrate": {
+                          "type": "integer",
+                          "example": 35
+                        },
+                        "protein": {
+                          "type": "integer",
+                          "example": 40
+                        },
+                        "fat": {
+                          "type": "integer",
+                          "example": 25
+                        }
+                      }
+                    },
+                    "eachKcal": {
+                      "type": "object",
+                      "properties": {
+                        "morning": {
+                          "type": "integer",
+                          "example": 440
+                        },
+                        "lunch": {
+                          "type": "integer",
+                          "example": 370
+                        },
+                        "dinner": {
+                          "type": "integer",
+                          "example": 390
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/node/macronutrientRatio/week/{u_id}/{date}": {
+      "get": {
+        "tags": ["Macronutrient Ratio"],
+        "summary": "Get macronutrient ratio by user ID and date for a week",
+        "parameters": [
+          {
+            "name": "u_id",
+            "in": "path",
+            "description": "ID of the user (Example: 4)",
+            "required": true,
+            "type": "integer"
+          },
+          {
+            "name": "date",
+            "in": "path",
+            "description": "Start date to calculate weekly macronutrient ratio (Explain : 2024-09-24)",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "date": {
+                  "type": "string",
+                  "example": "2024-09-24"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully calculated weekly macronutrient ratio",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "integer",
+                  "example": 200
+                },
+                "message": {
+                  "type": "string",
+                  "example": "계산을 완료했습니다"
+                },
+                "data": {
+                  "type": "object",
+                  "properties": {
+                    "macronutrientRatio": {
+                      "type": "object",
+                      "properties": {
+                        "carbohydrate": {
+                          "type": "integer",
+                          "example": 43
+                        },
+                        "protein": {
+                          "type": "integer",
+                          "example": 33
+                        },
+                        "fat": {
+                          "type": "integer",
+                          "example": 24
+                        }
+                      }
+                    },
+                    "kcal": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "date": {
+                            "type": "string",
+                            "example": "2024-09-24"
+                          },
+                          "intakeKcal": {
+                            "type": "integer",
+                            "example": 1200
+                          }
+                        }
+                      },
+                      "example": [
+                        {
+                          "date": "2024-09-23",
+                          "intakeKcal": 570
+                        },
+                        {
+                          "date": "2024-09-24",
+                          "intakeKcal": 1200
+                        },
+                        {
+                          "date": "2024-09-25",
+                          "intakeKcal": 510
+                        },
+                        {
+                          "date": "2024-09-26",
+                          "intakeKcal": 570
+                        },
+                        {
+                          "date": "2024-09-27",
+                          "intakeKcal": 580
+                        },
+                        {
+                          "date": "2024-09-28",
+                          "intakeKcal": 510
+                        },
+                        {
+                          "date": "2024-09-29",
+                          "intakeKcal": 570
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    }
+
+    ,
+    "/node/macronutrientRatio/evaluate/{u_id}/{date}": {
+      "get": {
+        "tags": ["Macronutrient Ratio"],
+        "summary": "Evaluate macronutrient intake compared to recommendation",
+        "parameters": [
+          {
+            "name": "u_id",
+            "in": "path",
+            "description": "ID of the user (Example: 4)",
+            "required": true,
+            "type": "integer"
+          },
+          {
+            "name": "date",
+            "in": "path",
+            "description": "Date to evaluate macronutrient intake",
+            "required": true,
+            "schema": {
+              "type": "object"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully evaluated macronutrient intake",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "integer",
+                  "example": 200
+                },
+                "message": {
+                  "type": "string",
+                  "example": "계산을 완료했습니다"
+                },
+                "data": {
+                  "type": "object",
+                  "properties": {
+                    "macronutrientRecommendation": {
+                      "type": "object",
+                      "properties": {
+                        "recomendCarbohydrate": {
+                          "type": "integer",
+                          "example": 258
+                        },
+                        "recomendProtein": {
+                          "type": "integer",
+                          "example": 103
+                        },
+                        "recomendFat": {
+                          "type": "integer",
+                          "example": 69
+                        }
+                      }
+                    },
+                    "intakeMacronutrient": {
+                      "type": "object",
+                      "properties": {
+                        "carbohydrate": {
+                          "type": "integer",
+                          "example": 77
+                        },
+                        "protein": {
+                          "type": "integer",
+                          "example": 85
+                        },
+                        "fat": {
+                          "type": "integer",
+                          "example": 53
+                        }
+                      }
+                    },
+                    "evaluate": {
+                      "type": "object",
+                      "properties": {
+                        "evaluateCarbohydrate": {
+                          "type": "string",
+                          "example": "탄수화물이 부족합니다"
+                        },
+                        "evaluateProtein": {
+                          "type": "string",
+                          "example": "단백질이 부족합니다"
+                        },
+                        "evaluateFat": {
+                          "type": "string",
+                          "example": "지방이 부족합니다"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "/bot": {
+          "post": {
+            "tags": ["Chat Bot"],
+            "summary": "Connect to the chat bot and ask questions",
+            "description": "Creates a socket connection for the client to ask questions to the chatbot and receive responses.",
+            "parameters": [
+              {
+                "name": "message",
+                "in": "body",
+                "description": "Question to be answered by the chatbot",
+                "required": true,
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "msg": {
+                      "type": "string",
+                      "example": "What are some healthy foods for the liver?"
+                    }
+                  }
+                }
+              }
+            ],
+            "responses": {
+              "200": {
+                "description": "Answer received from AI Bot",
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "answer": {
+                      "type": "string",
+                      "example": "Liver-friendly foods include carrots, sweet potatoes, and broccoli. Reducing processed foods and increasing water intake also benefits liver health."
+                    }
+                  }
+                }
+              },
+              "500": {
+                "description": "Failed to connect or send message"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "target": "ES2020", // 최신 ECMAScript 타겟
+    "module": "commonjs", // CommonJS 모듈 사용 (Jest 호환)
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "sourceMap": true,
+    "outDir": "./dist"
+  }
+}
