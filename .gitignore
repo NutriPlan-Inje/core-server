@@ -1,3 +1,58 @@
-/node_modules
+
+spring
+
+# Node.js 관련 파일
+node_modules/
 .env
-.properties
+
+# Spring 관련 파일
+*.properties
+*.class
+target/
+
+# Nginx 관련 파일
+nginx.conf
+logs/
+
+# 기타
+.vscode/
+.DS_Store
+
+
+HELP.md
+.gradle
+build/
+!gradle/wrapper/gradle-wrapper.jar
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+### STS ###
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+bin/
+!**/src/main/**/bin/
+!**/src/test/**/bin/
+
+### IntelliJ IDEA ###
+.idea
+*.iws
+*.iml
+*.ipr
+out/
+!**/src/main/**/out/
+!**/src/test/**/out/
+application.properties
+### NetBeans ###
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+
+### VS Code ###
+.vscode/

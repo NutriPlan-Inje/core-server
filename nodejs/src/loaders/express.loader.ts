@@ -18,7 +18,7 @@ export default async function expressLoader({ app }: { app: Application }) {
     app.use(urlencoded({ extended: false }));
 
     // Swagger 및 라우터 설정
-    app.use("/swagger", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+    app.use("/node/swagger", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
     app.use("/node", router());
 
     // 기본 경로
