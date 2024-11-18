@@ -50,7 +50,7 @@
     <button id="sendBtn">Send</button>
 
     <script>
-        const socket = io("http://localhost:3000", { path: "/bot" });
+        const socket = io("http://localhost/chat", { path: "/bot" });
 
         const messagesDiv = document.getElementById("messages");
         const messageInput = document.getElementById("messageInput");

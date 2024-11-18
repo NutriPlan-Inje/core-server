@@ -10,7 +10,7 @@ services:
     networks:
       - backend-network
     environment:
-      - PORT=${PORT}
+      - PORT=${NODE_PORT}
       - DB_DATABASE=${DB_DATABASE}
       - DB_HOST=${DB_HOST}
       - DB_USER=${DB_USER}
@@ -19,7 +19,7 @@ services:
       - REDIS_HOST=${REDIS_HOST}
       - REDIS_PORT=${REDIS_PORT}
       - OPENAI_API_KEY=${OPENAI_API_KEY}
-      
+
   chat :
     build:
       context: ./chat
@@ -28,9 +28,9 @@ services:
     ports:
       - "9000:9000"
     networks:
-      - backed-network
+      - backend-network
     environment:
-      - PORT=${PORT}
+      - PORT=${CHAT_PORT}
       - DB_DATABASE=${DB_DATABASE}
       - DB_HOST=${DB_HOST}
       - DB_USER=${DB_USER}

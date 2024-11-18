@@ -1,13 +1,15 @@
 # Base image
-FROM node:22
+FROM node:18
 
 # Work directory
 WORKDIR /app
 
-# Copy package.json and install dependencies
+# Copy package.json and package-lock.json
 COPY package*.json ./
+
+# Install dependencies
 RUN npm install
-RUN npm i ts-node -g
+
 # Copy application files
 COPY . .
 
@@ -15,4 +17,4 @@ COPY . .
 EXPOSE 8080
 
 # Start the Node application
-CMD ["ts-node", "./src/server.ts"]
+CMD ["npx", "ts-node", "./src/server.ts"]

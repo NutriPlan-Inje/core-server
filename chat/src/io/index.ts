@@ -7,7 +7,7 @@ import { Redis } from "ioredis";
 
 export default function init(server: http.Server) {
     const io = new Server(server, {
-        path: "/bot",
+        path: "/chat/bot",
         cors: {
             origin: "*",
             methods: ["GET", "POST"],
