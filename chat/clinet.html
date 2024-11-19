@@ -35,9 +35,6 @@
 <body>
     <h1>Chat Room Test Client</h1>
 
-    <!-- 방 제목 입력 필드 추가 -->
-    <input type="text" id="titleInput" placeholder="Enter room title" />
-
     <div>
         <button id="createRoomBtn">Create & Join Room</button>
     </div>
@@ -50,60 +47,46 @@
     <button id="sendBtn">Send</button>
 
     <script>
-        const socket = io("http://localhost/chat", { path: "/bot" });
+        // 정확한 URL로 설정
+        //const socket = io("http://43.203.239.235:8080", { path: "/bot" });
+        const socket = io("http://127.0.0.1:9000", { path: "/chat/bot" });
 
         const messagesDiv = document.getElementById("messages");
         const messageInput = document.getElementById("messageInput");
-        const titleInput = document.getElementById("titleInput"); 
         const roomInfoDiv = document.getElementById("roomInfo");
 
         let currentRoomId = null;
 
         document.getElementById("createRoomBtn").addEventListener("click", () => {
-            const roomTitle = titleInput.value.trim();
-            if (!roomTitle) {
-                logMessage("⚠️ Please enter a room title.");
-                return;
-            }
-
-            console.log(`Creating a new room...`);
-            socket.emit("create room", { title: roomTitle }); 
+            socket.emit("create room");
         });
 
-        // 방 생성 후 자동 참가 처리
         socket.on("room created", (data) => {
-            currentRoomId = data.cr_id; 
-            console.log(`Room created with ID: ${currentRoomId} and title: ${data.title}`);
-
-            // 생성된 방에 참가 요청
+            currentRoomId = data.cr_id;
             socket.emit("join room", { cr_id: currentRoomId });
         });
 
-        // 방 참가 성공 응답 처리
         socket.on("room joined", (data) => {
-            roomInfoDiv.innerHTML = `<p>Joined Room: ${data.cr_id} - ${data.title}</p>`;
+            roomInfoDiv.innerHTML = `<p>Joined Room: ${data.cr_id}</p>`;
             logMessage(`✅ Successfully joined room: ${data.cr_id}`);
         });
 
         document.getElementById("sendBtn").addEventListener("click", () => {
             const msg = messageInput.value.trim();
             if (msg && currentRoomId) {
-                console.log(`Sending message: ${msg}`);
                 socket.emit("chat message", { roomId: currentRoomId, msg });
                 logMessage(`🧑‍💻 You: ${msg}`);
-                messageInput.value = ""; 
+                messageInput.value = "";
             } else {
                 logMessage("⚠️ Please enter a message and ensure you're in a room.");
             }
         });
 
         socket.on("chat message", (data) => {
-            console.log("Received message from AI Bot:", data);
             logMessage(`🤖 AI Bot: ${data.answer}`);
         });
 
         socket.on("error", (error) => {
-            console.error("Socket error:", error);
             logMessage(`❌ Error: ${error.message || error}`);
         });
 
@@ -113,6 +96,6 @@
             messagesDiv.appendChild(p);
             messagesDiv.scrollTop = messagesDiv.scrollHeight;
         }
-    </script>    
+    </script>
 </body>
 </html>

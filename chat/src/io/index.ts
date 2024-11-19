@@ -7,9 +7,9 @@ import { Redis } from "ioredis";
 
 export default function init(server: http.Server) {
     const io = new Server(server, {
-        path: "/chat/bot",
+        path: "/bot",
         cors: {
-            origin: "*",
+            origin: "*", // 모든 도메인 허용
             methods: ["GET", "POST"],
             credentials: true,
         },
@@ -18,64 +18,77 @@ export default function init(server: http.Server) {
     const redis: Redis = Container.get("redis");
 
     io.on("connection", async (socket: Socket) => {
-        console.log("user connected");
+        console.log("✅ A user connected:", socket.id);
 
-        socket.on("create room", async ({ title }) => {
-            const cr_id: string = uuidv4();
-            console.log("방제목:", title);
+        // 방 생성 이벤트
+        socket.on("create room", async (data) => {
+            const title = data?.title || "Default Room"; // title이 없을 때 기본값 설정
+            try {
+                const cr_id: string = uuidv4();
+                console.log("방제목:", title);
 
-            await redis.set(`room:${cr_id}`, JSON.stringify({ title, createdAt: Date.now() }));
-            chatService.createChatRoom({ cr_id, title });
+                await redis.set(`room:${cr_id}`, JSON.stringify({ title, createdAt: Date.now() }));
+                chatService.createChatRoom({ cr_id, title });
 
-            socket.emit("room created", { cr_id, title });
-            console.log(`Room ${cr_id} created with title: ${title}`);
+                socket.emit("room created", { cr_id, title });
+                console.log(`Room ${cr_id} created with title: ${title}`);
+            } catch (error) {
+                console.error("Error creating room:", error);
+                socket.emit("error", { message: "Failed to create room" });
+            }
         });
 
+        // 방 참가 이벤트
         socket.on("join room", async ({ cr_id }) => {
             try {
-                const roomExists = await redis.exists(`room:${cr_id}`);
-                if (!roomExists) {
-                    return socket.emit("error", { message: `Room ${cr_id} does not exist` });
+                const roomData = await redis.get(`room:${cr_id}`);
+                if (!roomData) {
+                    socket.emit("error", { message: `Room ${cr_id} does not exist` });
+                    return;
                 }
 
-                const roomData = await redis.get(`room:${cr_id}`);
-                const { title } = JSON.parse(roomData || '{}');
-
-                await redis.sadd(`room:${cr_id}:members`, socket.id);
+                const { title } = JSON.parse(roomData);
                 socket.join(`room-${cr_id}`);
+                await redis.sadd(`room:${cr_id}:members`, socket.id);
+
                 socket.emit("room joined", { cr_id, title });
-                console.log(`Client ${socket.id} joined room ${cr_id} with title: ${title}`);
+                console.log(`✅ User ${socket.id} joined room ${cr_id}`);
             } catch (error) {
-                console.error("Error joining room:", error);
-                socket.emit("error", { msg: "Failed to join room" });
+                console.error("❌ Error joining room:", error);
+                socket.emit("error", { message: "Failed to join room" });
             }
         });
 
+        // 채팅 메시지 이벤트
         socket.on("chat message", async ({ roomId, msg }) => {
             try {
+                // 메시지 Redis 저장
                 const timestamp = Date.now();
                 const messageData = JSON.stringify({ timestamp, msg, senderName: socket.id });
-
                 await redis.rpush(`room:${roomId}:messages`, messageData);
-                await redis.expire(`room:${roomId}:messages`, 3600);
 
-                console.log(`Message received in room ${roomId}: ${msg}`);
+                console.log(`💬 Received message in room ${roomId}: ${msg}`);
 
-                const answer = await chatService.askQuestion(null, msg);
-                io.to(`room-${roomId}`).emit("chat message", { roomId, answer });
-                console.log(`AI responded in room ${roomId}: ${answer}`);
+                // AI 답변 생성
+                const previousMessages = await redis.lrange(`room:${roomId}:messages`, 0, -1);
+                const previousMessageContent = previousMessages
+                    .map((m) => JSON.parse(m).msg)
+                    .join(" ");
+
+                const answer = await chatService.askQuestion(previousMessageContent, msg);
+
+                // 클라이언트로 응답 전송
+                io.to(`room-${roomId}`).emit("chat message", { roomId, sender: "AI Bot", answer });
+                console.log(`🤖 AI responded in room ${roomId}: ${answer}`);
             } catch (error) {
-                console.error("Failed to send AI response", error);
-                io.to(`room-${roomId}`).emit("chat message", { err: "failed to send message" });
+                console.error("❌ Error processing message:", error);
+                socket.emit("error", { message: "Failed to send message" });
             }
         });
 
+        // 연결 종료 이벤트
         socket.on("disconnect", async () => {
-            const roomKeys = await redis.keys("room:*:members");
-            for (const key of roomKeys) {
-                await redis.srem(key, socket.id);
-            }
-            console.log(`User ${socket.id} disconnected`);
+            console.log(`❌ User disconnected: ${socket.id}`);
         });
     });
 }
