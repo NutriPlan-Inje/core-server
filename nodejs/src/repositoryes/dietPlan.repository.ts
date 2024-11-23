@@ -17,7 +17,7 @@ export default class DietPlanRepository extends Repository{
     }
 
     async deleteDietPlanById( { id } : { id : number }) {
-        const query : string = 'DELETE FROM userDietPlan WHERE id = ?'
+        const query : string = 'DELETE FROM userDietPlan WHERE id = ?' 
         await this.executeQuery(query, [id]);
     }   
 }
