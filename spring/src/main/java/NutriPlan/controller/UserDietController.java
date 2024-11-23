@@ -11,10 +11,13 @@ import NutriPlan.model.Dao.User;
 import NutriPlan.model.Dao.UserDietPlan;
 import NutriPlan.model.Dto.FoodNutrientDto;
 import NutriPlan.model.Dto.UserDietDto;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -63,4 +66,25 @@ public class UserDietController {
             return ResponseEntity.badRequest().body("식단 추가 중 오류가 발생했습니다: " + e.getMessage());
         }
     }
+
+    @GetMapping("getFoodForUsrMealTime")
+    public ResponseEntity<?> getDietPlan(
+            @RequestParam("userId") int userId,
+            @RequestParam("mealTime") int mealTime,
+            @RequestParam("date") String date) {
+        try {
+            LocalDate localDate = LocalDate.parse(date);
+
+
+            List<Map<String, Object>> dietPlan = userDietPlanService.getDietPlan(userId, mealTime, localDate);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("data", dietPlan);
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", "식단 조회 중 오류가 발생했습니다", "message", e.getMessage()));
+        }
+    }
+
 }
