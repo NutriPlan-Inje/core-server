@@ -12,7 +12,7 @@ export default function init(server: http.Server) {
             origin: "*", // 모든 도메인 허용
             methods: ["GET", "POST"],
             credentials: true,
-        },
+        }, 
     });
     const chatService: ChatService = Container.get(ChatService);
     const redis: Redis = Container.get("redis");

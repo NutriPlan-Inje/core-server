@@ -3,7 +3,7 @@ services:
   node:
     build:
       context: ./nodejs
-      dockerfile: dockerfile
+      dockerfile: Dockerfile
     container_name: node-app
     ports:
       - "8080:8080"
@@ -23,7 +23,7 @@ services:
   chat :
     build:
       context: ./chat
-      dockerfile: dockerfile
+      dockerfile: Dockerfile
     container_name: node-chat
     ports:
       - "9000:9000"
@@ -40,6 +40,16 @@ services:
       - REDIS_PORT=${REDIS_PORT}
       - OPENAI_API_KEY=${OPENAI_API_KEY}
 
+  spring:
+    container_name: spring
+    build:
+      context: ./spring
+      dockerfile: Dockerfile
+    ports:
+      - "9999:7000"
+    networks:
+      - backend-network
+
   nginx:
     container_name: nginx
     image: nginx:latest
@@ -51,6 +61,7 @@ services:
       - "80:80"
     depends_on:
       - node
+
 
   redis:
     container_name: redis

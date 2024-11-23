@@ -1,10 +1,26 @@
-# Base image
-FROM nginx:alpine
+# Base image with Node.js
+FROM node:18
 
-# Copy custom NGINX configuration file
-COPY nginx.conf /etc/nginx/nginx.conf
+# Set working directory
+WORKDIR /app
+
+# Copy package.json and package-lock.json
+COPY package*.json ./
+
+# Install dependencies
+RUN npm install
+
+# Install global dependencies
+RUN npm install -g typescript ts-node
+
+# Copy application source code
+COPY . .
+
+# Build Typescript files
+RUN npm run build
 
 # Expose port
-EXPOSE 80
+EXPOSE 9000
 
-CMD ["nginx", "-g", "daemon off;"]
+# Start the application (run compiled JS file)
+CMD ["node", "dist/server.js"]

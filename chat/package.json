@@ -4,7 +4,7 @@
   "main": "index.js",
   "scripts": {
     "test": "jest --runInBand",
-    "start": "nodemon src/server.ts",
+    "start": "node dist/server.js",
     "build": "tsc"
   },
   "author": "",
