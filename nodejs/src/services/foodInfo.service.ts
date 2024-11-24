@@ -10,15 +10,26 @@ export class FoodInfoService {
     ){}
 
     async findFoodInfoById({ f_id } : { f_id : number }) : Promise<FoodInfoResponseDTO> {
-        const foodInfo : FoodInfoDTO = await this.foodInfoRepository.findFoodInfoById({f_id});
+        try{
+            const foodInfo : FoodInfoDTO = await this.foodInfoRepository.findFoodInfoById({f_id});
+            if (foodInfo === undefined){
+                throw new Error();
+            }
+            const foodInfoResponseDTO : FoodInfoResponseDTO = {
+                statusCode : 200,
+                message : '성공적으로 조회했습니다',
+                data : foodInfo
+            }
 
-        const foodInfoResponseDTO : FoodInfoResponseDTO = {
-            statusCode : 200,
-            message : '성공적으로 조회했습니다',
-            data : foodInfo
-        }
-
-        return foodInfoResponseDTO;
+            return foodInfoResponseDTO;
+        }catch (error) {
+            console.error(error);
+            return {
+                statusCode : 404,
+                message : '조회에 실패했습니다',
+                data : null
+            } as FoodInfoResponseDTO;
+        }   
     }
     
 

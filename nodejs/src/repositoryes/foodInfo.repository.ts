@@ -10,9 +10,15 @@ export default class FoodInfoRepository extends Repository{
     }
     //[ ] CRUD
     async findFoodInfoById({ f_id } : { f_id : number }) : Promise<FoodInfoDTO> {
-        const query : string = 'SELECT * FROM foodInfo WHERE id = ?';
-        const result : FoodInfoDTO[]= await this.executeQuery(query, [f_id]);
-        return result[0];
+        let result : FoodInfoDTO[] = [];
+        try{
+            const query : string = 'SELECT * FROM foodInfo WHERE id = ?';
+            result = await this.executeQuery(query, [f_id]);
+            return result[0];
+        }catch (error) {
+            console.error(error);
+            return result[0];
+        }
     }
 
     async deleteFoodInfoById( { f_id } : { f_id : number }) {

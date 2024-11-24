@@ -14,6 +14,10 @@ export class DietPlanController {
             const date : string = req.params.date;
             const u_id : number = parseInt(req.params.u_id);
             const dietPlanResponseDTO : DietPlanResponseDTO = await this.dietPlanService.findDietPlanByDateAndUid({ date, u_id  });
+            console.log(dietPlanResponseDTO);
+            if(dietPlanResponseDTO.statusCode === 404){
+                return res.status(404).json(dietPlanResponseDTO);
+            }
             return res.status(200).json(dietPlanResponseDTO);
         } catch (error) {
             return next(error);

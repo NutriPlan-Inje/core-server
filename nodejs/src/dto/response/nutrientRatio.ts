@@ -8,6 +8,6 @@ export interface MacronutrientRatioDTO { //탄단지 비율을 %로 해서 보�
     eachKcal : EachKcal;
 }
 
-export interface MacronutrientRatioResponseDTO extends CommonResponseDTO<MacronutrientRatioDTO>{}
-export interface MacronutrientRatioForDayResponseDTO extends CommonResponseDTO<DailyMacronutrientSummary>{}
-export interface MacronutrientRatioForWeekResponseDTO extends CommonResponseDTO<WeekMacronutrientSummary>{}
+export interface MacronutrientRatioResponseDTO extends CommonResponseDTO<MacronutrientRatioDTO | null>{}
+export interface MacronutrientRatioForDayResponseDTO extends CommonResponseDTO<DailyMacronutrientSummary | null>{}
+export interface MacronutrientRatioForWeekResponseDTO extends CommonResponseDTO<WeekMacronutrientSummary | null>{}

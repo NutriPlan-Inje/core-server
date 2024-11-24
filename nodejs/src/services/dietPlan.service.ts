@@ -9,9 +9,7 @@ export default class DietPlanService {
         @Inject( () => DietPlanRepository) private readonly  dietPlanRepository :DietPlanRepository
     ){} 
 
-    async findDietPlanByDateAndUid( { date, u_id } : { date : string, u_id : number }) : Promise<DietPlanResponseDTO> {
-        const dietPlans : DietPlanDTO[] = await this.dietPlanRepository.findDietPlanByDateAndUid({date, u_id});
-
+    private getResult ({ dietPlans }: { dietPlans : DietPlanDTO[] }) : DietPlanResponseDTO {
         const updatedDietPlans = dietPlans.map((plan) => {
             const date = new Date(plan.date); // 기존 날짜 가져오기
             date.setDate(date.getDate() + 1); // 날짜에 하루 더하기
@@ -21,14 +19,31 @@ export default class DietPlanService {
             return { ...plan, date: formattedDate };
         });
 
-        //TODO : 조건문 사용해 값을 못 받아온 경우 처리하기
-
-        const dietPlanResponseDTO : DietPlanResponseDTO = {
+        const result : DietPlanResponseDTO = {
             statusCode : 200,
             message : '성공적으로 조회했습니다',
             data : updatedDietPlans
         }
-        return dietPlanResponseDTO;
+
+        return result;
+    }
+    async findDietPlanByDateAndUid( { date, u_id } : { date : string, u_id : number }) : Promise<DietPlanResponseDTO> {
+        try{
+            const dietPlans : DietPlanDTO[] = await this.dietPlanRepository.findDietPlanByDateAndUid({date, u_id});
+            if(dietPlans.length === 0){
+                throw new Error();
+            }
+
+            const dietPlanResponseDTO = this.getResult({ dietPlans });
+            return dietPlanResponseDTO;
+        } catch (error) {
+            console.error(error);
+            return {
+                statusCode : 404,
+                message : '조회에 실패했습니다',
+                data : []
+            } as DietPlanResponseDTO;
+        }
     }
 
     async deleteDietPlanById( { id } : { id : number }) : Promise<DeleteDietPlanResponseDTO>{

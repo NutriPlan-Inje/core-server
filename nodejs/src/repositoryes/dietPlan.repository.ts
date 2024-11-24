@@ -10,14 +10,20 @@ export default class DietPlanRepository extends Repository{
     }
     //[ ] 조회 삭제
     async findDietPlanByDateAndUid( { date, u_id} : { date : string, u_id : number }) : Promise<DietplanDTO[]> {
-        const query : string = "SELECT * FROM userDietPlan WHERE DATE(date) = ? AND user_id = ? ORDER BY mealTime ASC";
-        const result : DietplanDTO[]  = await this.executeQuery(query, [date, u_id]);
+        let result : DietplanDTO[] = [];
+        try{
+            const query : string = "SELECT * FROM userDietPlan WHERE DATE(date) = ? AND user_id = ? ORDER BY mealTime ASC";
+            result = await this.executeQuery(query, [date, u_id]);
         
-        return result;
+            return result;
+        }catch (error) {
+            console.error(error);
+            return result
+        }
     }
 
     async deleteDietPlanById( { id } : { id : number }) {
-        const query : string = 'DELETE FROM userDietPlan WHERE id = ?' 
+        const query : string = 'DELETE FROM userDietPlan WHERE id = ?'
         await this.executeQuery(query, [id]);
     }   
 }

@@ -102,58 +102,119 @@ export class NutrientsRatioServie {
     }
 
     async evaluateMacronutrientIntakeForDay({ u_id, date } : { u_id : number, date : string}) : Promise<MacronutrientRatioForDayResponseDTO>{
-        //섭취한 영양 + 유저의 기초대사량
-        const dietPlan : DietplanDTO[]= await this.dietPlanRepository.findDietPlanByDateAndUid({date, u_id});
-        const macronutrient : MacronutrientType = await this.Macronutrient({ dietPlan })
-        const userInfo : UserDTO = await this.userRepository.getUserInfoByUid({u_id});
-        const userBmr = userInfo.bmr;
-        
-        const recomendMacronutrient : RecomendMacronutrientType = this.calculateRecomendNutrition({ userBmr });
-        const resultEvaluate : EvaluateMacronutrient = this.evaluateMacronutrient({ recomendMacronutrient, macronutrient});
+        try{
+            //섭취한 영양 + 유저의 기초대사량
+            const userInfo : UserDTO = await this.userRepository.getUserInfoByUid({u_id});
+            if (userInfo === undefined) {
+                throw new Error("can not found user");
+            }
+            const dietPlan : DietplanDTO[]= await this.dietPlanRepository.findDietPlanByDateAndUid({date, u_id});
+            if(dietPlan.length === 0){
+                throw new Error("can not found dietPlan");
+            }
+            
+            const macronutrient : MacronutrientType = await this.Macronutrient({ dietPlan })
+            const userBmr = userInfo.bmr;
+            
+            const recomendMacronutrient : RecomendMacronutrientType = this.calculateRecomendNutrition({ userBmr });
+            const resultEvaluate : EvaluateMacronutrient = this.evaluateMacronutrient({ recomendMacronutrient, macronutrient});
 
 
-        const dailyMacronutrientSummary : DailyMacronutrientSummary = {
-            macronutrientRecommendation : recomendMacronutrient,
-            intakeMacronutrient : macronutrient,
-            evaluate :  resultEvaluate
+            const dailyMacronutrientSummary : DailyMacronutrientSummary = {
+                macronutrientRecommendation : recomendMacronutrient,
+                intakeMacronutrient : macronutrient,
+
+                evaluate :  resultEvaluate
+            }
+
+
+            const macronutrientRatioForDayResponseDTO : MacronutrientRatioForDayResponseDTO  = {
+                statusCode : 200,
+                message : "계산을 완료했습니다",
+                data :  dailyMacronutrientSummary
+            } 
+
+            return macronutrientRatioForDayResponseDTO;
+        } catch (error : any) {
+            console.error(error)
+            return  {
+                statusCode : 404,
+                message : "조회에 실패했습니다",
+                data :  null
+            } as MacronutrientRatioForDayResponseDTO;
         }
-
-
-        const macronutrientRatioForDayResponseDTO : MacronutrientRatioForDayResponseDTO  = {
-            statusCode : 200,
-            message : "계산을 완료했습니다",
-            data :  dailyMacronutrientSummary
-        }
-
-        return macronutrientRatioForDayResponseDTO;
     }
     
-    async calculateMacronutrientRatioForDay({ u_id, date } : { u_id: number, date : string }): Promise<MacronutrientRatioResponseDTO> {
-        const dietPlan : DietplanDTO[]= await this.dietPlanRepository.findDietPlanByDateAndUid({date, u_id});
-        
-        const eachKcal : EachKcal = await this.getEachKcal({ dietPlan })
-        const macronutrient =  await this.Macronutrient({ dietPlan } )
-
-        const total = macronutrient.carbohydrate + macronutrient.protein + macronutrient.fat;
-        const macronutrientRatio : MacronutrientType = {
-            carbohydrate : Math.round(macronutrient.carbohydrate / total * 100),
-            protein : Math.round(macronutrient.protein / total * 100),
-            fat : Math.round(macronutrient.fat / total * 100),
-        };
-
-        const macronutrientRatioResponseDTO : MacronutrientRatioResponseDTO = {
-            statusCode : 200,
-            message : '계산을 완료했습니다',
-            data : {
-                date : date,
-                macronutrient : macronutrient,
-                macronutrientRatio :  macronutrientRatio, 
-                eachKcal : eachKcal
+    async calculateMacronutrientRatioForDay({ u_id, date }: { u_id: number; date: string }): Promise<MacronutrientRatioResponseDTO> {
+        try {
+            // 1. DietPlan 조회
+            const dietPlan: DietplanDTO[] = await this.dietPlanRepository.findDietPlanByDateAndUid({ date, u_id });
+            if (dietPlan.length === 0) {
+                throw new Error("can not found dietPlan");
             }
+    
+            // 2. 각 Kcal 및 영양소 계산
+            const eachKcal: EachKcal = await this.getEachKcal({ dietPlan });
+            const macronutrient = await this.Macronutrient({ dietPlan });
+    
+            // 3. 총량 계산
+            const total = macronutrient.carbohydrate + macronutrient.protein + macronutrient.fat;
+    
+            // 4. 비율 계산 (반올림)
+            const rawRatios = {
+                carbohydrate: macronutrient.carbohydrate / total * 100,
+                protein: macronutrient.protein / total * 100,
+                fat: macronutrient.fat / total * 100,
+            };
+    
+            let macronutrientRatio: MacronutrientType = {
+                carbohydrate: Math.round(rawRatios.carbohydrate),
+                protein: Math.round(rawRatios.protein),
+                fat: Math.round(rawRatios.fat),
+            };
+    
+            // 5. 합계 확인 및 보정
+            let totalRatio = macronutrientRatio.carbohydrate + macronutrientRatio.protein + macronutrientRatio.fat;
+            if (totalRatio !== 100) {
+                const diffs = {
+                    carbohydrate: rawRatios.carbohydrate - macronutrientRatio.carbohydrate,
+                    protein: rawRatios.protein - macronutrientRatio.protein,
+                    fat: rawRatios.fat - macronutrientRatio.fat,
+                };
+                
+                // 가장 큰 오차를 가진 키 찾기
+                const adjustKey = Object.keys(diffs).reduce((a, b) =>
+                    Math.abs(diffs[a as keyof MacronutrientType]) > Math.abs(diffs[b as keyof MacronutrientType]) ? a : b
+                ) as keyof MacronutrientType;
+                
+                // 비율 보정
+                macronutrientRatio[adjustKey] += (totalRatio < 100 ? 1 : -1);
+            }
+    
+            // 6. 응답 생성
+            const macronutrientRatioResponseDTO: MacronutrientRatioResponseDTO = {
+                statusCode: 200,
+                message: '계산을 완료했습니다',
+                data: {
+                    date: date,
+                    macronutrient: macronutrient,
+                    macronutrientRatio: macronutrientRatio,
+                    eachKcal: eachKcal,
+                },
+            };
+    
+            return macronutrientRatioResponseDTO;
+    
+        } catch (error) {
+            console.error(error);
+            return {
+                statusCode: 404,
+                message: '계산에 실패했습니다.',
+                data: null,
+            } as MacronutrientRatioResponseDTO;
         }
-
-        return macronutrientRatioResponseDTO;
     }
+    
 
     private getWeekStartAndEnd({ date } : { date: string }): { startOfWeek: string, endOfWeek: string } {
         //TODO: new를 많이 부르는 거는 좋은 형태가 아님
@@ -172,71 +233,95 @@ export class NutrientsRatioServie {
         };
     }
     
-    async calculateMacronutrientRatioForWeek({ u_id, date } : { u_id: number, date : string }) : Promise<MacronutrientRatioForWeekResponseDTO> {
-        // u_id에 따른 주간 권장 탄단지 비율 계산 로직
-        //calculateMacronutrientRatioForDay 얘를 주회해야 하는 날짜만큼 돌린면 됨
-        const { startOfWeek, endOfWeek } = this.getWeekStartAndEnd({date});
-        const macronutrients = [];
-        const weekKcal : DailyKcal[] = [];
-        let cnt : number = 0;
-
-        for(let i = new Date(startOfWeek); i <= new Date(endOfWeek); i.setDate(i.getDate() + 1)) {
-            // 날짜별 작업 수행
-            let date = i.toISOString().split('T')[0]
-            let tmp = await this.calculateMacronutrientRatioForDay({u_id, date});
-            macronutrients.push(tmp.data);
-
-            //reduce나 map으로 해보기 
-            if (tmp && tmp.data) {
-                macronutrients.push(tmp.data);
-                
-                if (tmp.data.eachKcal && tmp.data.date) {
-                    weekKcal[cnt] = {
-                        date: tmp.data.date,
-                        intakeKcal: tmp.data.eachKcal.dinner + tmp.data.eachKcal.lunch + tmp.data.eachKcal.morning
-                    };
-                    cnt++;
-                }
-            }
-        }
-
-        let carbohydrate : number = 0;
-        let  protein : number = 0;
-        let fat : number = 0;
-
-        for (let i = 0; i < macronutrients.length; i++) {
-            const nutrient = macronutrients[i];
+    async calculateMacronutrientRatioForWeek({ u_id, date }: { u_id: number, date: string }): Promise<MacronutrientRatioForWeekResponseDTO> {
+        try {
+            const { startOfWeek, endOfWeek } = this.getWeekStartAndEnd({ date });
+            const macronutrients = [];
+            const weekKcal: DailyKcal[] = [];
+            let cnt: number = 0;
     
-            if (nutrient && nutrient.macronutrient) {
-                if (nutrient.macronutrient.carbohydrate !== undefined) {
-                    carbohydrate += nutrient.macronutrient.carbohydrate;
-                }
-                if (nutrient.macronutrient.protein !== undefined) {
-                    protein += nutrient.macronutrient.protein;
-                }
-                if (nutrient.macronutrient.fat !== undefined) {
-                    fat += nutrient.macronutrient.fat;
+            for (let i = new Date(startOfWeek); i <= new Date(endOfWeek); i.setDate(i.getDate() + 1)) {
+                // 날짜별 작업 수행
+                const dayDate = i.toISOString().split('T')[0];
+                const tmp = await this.calculateMacronutrientRatioForDay({ u_id, date: dayDate });
+    
+                if (tmp && tmp.data) {
+                    macronutrients.push(tmp.data);
+    
+                    if (tmp.data.eachKcal && tmp.data.date) {
+                        weekKcal[cnt] = {
+                            date: tmp.data.date,
+                            intakeKcal: tmp.data.eachKcal.dinner + tmp.data.eachKcal.lunch + tmp.data.eachKcal.morning,
+                        };
+                        cnt++;
+                    }
                 }
             }
+    
+            let carbohydrate: number = 0;
+            let protein: number = 0;
+            let fat: number = 0;
+    
+            for (const nutrient of macronutrients) {
+                if (nutrient && nutrient.macronutrient) {
+                    carbohydrate += nutrient.macronutrient.carbohydrate || 0;
+                    protein += nutrient.macronutrient.protein || 0;
+                    fat += nutrient.macronutrient.fat || 0;
+                }
+            }
+    
+            const total = carbohydrate + protein + fat;
+    
+            // 비율 계산
+            const rawRatios: MacronutrientType = {
+                carbohydrate: (carbohydrate / total) * 100,
+                protein: (protein / total) * 100,
+                fat: (fat / total) * 100,
+            };
+    
+            const macronutrientRatio: MacronutrientType = {
+                carbohydrate: Math.round(rawRatios.carbohydrate),
+                protein: Math.round(rawRatios.protein),
+                fat: Math.round(rawRatios.fat),
+            };
+    
+            // 비율 보정 (총합 100 보장)
+            const totalRatio = macronutrientRatio.carbohydrate + macronutrientRatio.protein + macronutrientRatio.fat;
+            if (totalRatio !== 100) {
+                const diffs = {
+                    carbohydrate: rawRatios.carbohydrate - macronutrientRatio.carbohydrate,
+                    protein: rawRatios.protein - macronutrientRatio.protein,
+                    fat: rawRatios.fat - macronutrientRatio.fat,
+                };
+    
+                // 가장 큰 오차를 가진 키 찾기
+                const adjustKey = Object.keys(diffs).reduce((a, b) =>
+                    Math.abs(diffs[a as keyof MacronutrientType]) > Math.abs(diffs[b as keyof MacronutrientType]) ? a : b
+                ) as keyof MacronutrientType;
+    
+                // 비율 보정
+                macronutrientRatio[adjustKey] += (totalRatio < 100 ? 1 : -1);
+            }
+    
+            // 주간 요약 생성
+            const weekMacronutrientSummary: WeekMacronutrientSummary = {
+                macronutrientRatio,
+                kcal: weekKcal,
+            };
+    
+            return {
+                statusCode: 200,
+                message: "계산을 완료했습니다",
+                data: weekMacronutrientSummary,
+            };
+        } catch (error) {
+            console.error(error);
+            return {
+                statusCode: 404,
+                message: "계산에 실패했습니다",
+                data: null,
+            } as MacronutrientRatioForWeekResponseDTO;
         }
-
-        let total = carbohydrate + protein + fat;
-        //TODO: 밖에서 계산하고 넣기
-        const weekMacronutrientSummary: WeekMacronutrientSummary = {
-            macronutrientRatio: {
-                carbohydrate: Math.round((carbohydrate / total) * 100), 
-                protein: Math.round((protein / total) * 100),           
-                fat: Math.round((fat / total) * 100),                 
-            },
-            kcal : weekKcal
-        };
-        
-        const macronutrientRatioForWeekResponseDTO : MacronutrientRatioForWeekResponseDTO = {
-            statusCode: 200,
-            message : "계산을 완료했습니다",
-            data : weekMacronutrientSummary
-        }
-
-        return macronutrientRatioForWeekResponseDTO;
     }
+    
 }

@@ -7,7 +7,7 @@ export default interface FoodInfoDTO {
     carbohydrate : number;
     protein : number;
     fat : number;
-    category : string
+    category : string;
 }
 
 

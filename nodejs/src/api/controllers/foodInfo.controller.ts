@@ -12,7 +12,12 @@ export class FoodInfoController {
     findFoodInfoById = async (req : Request, res : Response, next : NextFunction) => {
         try {
             const f_id : number = parseInt(req.params.f_id);
-            const foodInfoResponseDTO : FoodInfoResponseDTO = await this.foodInfoService.findFoodInfoById({f_id});
+            const foodInfoResponseDTO : FoodInfoResponseDTO  = await this.foodInfoService.findFoodInfoById({f_id});
+            
+            if (foodInfoResponseDTO?.statusCode === 404){
+                return res.status(404).json(foodInfoResponseDTO);
+            }
+            
             return res.status(200).json(foodInfoResponseDTO);
         } catch (error) {
             return next(error);
