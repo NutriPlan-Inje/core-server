@@ -31,6 +31,7 @@ services:
       - backend-network
     environment:
       - PORT=${CHAT_PORT}
+      
       - DB_DATABASE=${DB_DATABASE}
       - DB_HOST=${DB_HOST}
       - DB_USER=${DB_USER}
@@ -46,7 +47,7 @@ services:
       context: ./spring
       dockerfile: Dockerfile
     ports:
-      - "9999:7000"
+      - "9999:6000"
     networks:
       - backend-network
 

@@ -14,7 +14,7 @@ COPY src/main/resources/application.properties /app/
 # COPY src/main/resources/application-local.yml /app/
 
 # Expose the port that your Spring Boot application will run on
-EXPOSE 7000
+EXPOSE 6000
 
 # Run the JAR file
 ENTRYPOINT ["java", "-jar", "/app/app.jar"]
