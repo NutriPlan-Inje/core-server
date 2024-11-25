@@ -4,6 +4,17 @@ import { Server, Socket } from "socket.io";
 import Container from "typedi";
 import ChatService from "../services/chat.service";
 import { Redis } from "ioredis";
+import axios from "axios";
+
+const formatDate = (): string => {
+    const now = new Date(Date.now());
+    
+    const year = now.getFullYear(); 
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0'); 
+    
+    return `${year}-${month}-${day}`; // YYYY-MM-DD 형식으로 반환
+};
 
 export default function init(server: http.Server) {
     const io = new Server(server, {
@@ -22,15 +33,24 @@ export default function init(server: http.Server) {
 
         // 방 생성 이벤트
         socket.on("create room", async (data) => {
-            const title = data?.title || "Default Room"; // title이 없을 때 기본값 설정
             try {
+                console.log(data);
                 const cr_id: string = uuidv4();
-                console.log("방제목:", title);
+                const u_id : number = data.u_id;
+                const title : string = `${u_id}:${cr_id}`;
+                const date : string = data.date;
 
-                await redis.set(`room:${cr_id}`, JSON.stringify({ title, createdAt: Date.now() }));
-                chatService.createChatRoom({ cr_id, title });
+                await redis.set(`room:${cr_id}`, JSON.stringify({createdAt: date }));
 
-                socket.emit("room created", { cr_id, title });
+                const dietPlan = await axios.get(`http://3.38.175.70/node/${u_id}/${date}`);
+                console.log(dietPlan);
+
+                chatService.createChatRoom({ cr_id, u_id, title, date, dietPlan});
+                
+                
+
+
+                socket.emit("room created", { cr_id, title,  });
                 console.log(`Room ${cr_id} created with title: ${title}`);
             } catch (error) {
                 console.error("Error creating room:", error);
@@ -60,12 +80,12 @@ export default function init(server: http.Server) {
         });
 
         // 채팅 메시지 이벤트
-        socket.on("chat message", async ({ roomId, msg }) => {
+        socket.on("chat message", async ({ roomId, msg, u_id }) => {
             try {
                 // 메시지 Redis 저장
                 const timestamp = Date.now();
-                const messageData = JSON.stringify({ timestamp, msg, senderName: socket.id });
-                await redis.rpush(`room:${roomId}:messages`, messageData);
+                const messageData = JSON.stringify({ timestamp, msg, senderName: socket.id, u_id });
+                await redis.rpush(`room:${roomId}:messages`, messageData); 
 
                 console.log(`💬 Received message in room ${roomId}: ${msg}`);
 

@@ -51,12 +51,13 @@ export default class ChatService {
                 const messages = await this.redis.lrange(key, 0, -1);
     
                 const messageData = messages.map((msg) => {
-                    const { timestamp, msg: content, senderName } = JSON.parse(msg);
+                    const { timestamp, msg: content, senderName, u_id } = JSON.parse(msg);
                     return {
                         cr_id: roomId,
                         createAt: Math.floor(timestamp / 1000), // 초 단위로 변환
                         content,
                         sender_name: senderName,
+                        u_id
                     } as MessageDTO;
                 });
     
@@ -73,8 +74,10 @@ export default class ChatService {
         }
     }
 
-    createChatRoom = async ({ cr_id, title } : { cr_id : string, title : string}) => {
-        try{
+    //TODO: 방 생성시 
+    createChatRoom = async ({ cr_id, u_id, title, date, dietPlan } : { cr_id : string, u_id : number, title : string, date : string, dietPlan :any}) => {
+        try{  
+            console.log(dietPlan)
             this.chatRepository.createChatRoom({ cr_id, title });
         } catch (error) {
             console.error("create chatRoom Error : ", error);

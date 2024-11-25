@@ -12,7 +12,7 @@ export default class ChatRepository extends Repository {
     async saveMessages(messages: MessageDTO[]) {
         try {
             const query = `
-                INSERT INTO message (cr_id, createAt, content, sender_name)
+                INSERT INTO message (cr_id, createAt, content, sender_name, u_id)
                 VALUES ?`;
 
             // MessageDTO[]를 (string | number)[][] 형식으로 변환
@@ -23,15 +23,17 @@ export default class ChatRepository extends Repository {
                 sender_name,
             ]);
             console.log(values[0]);
-
-            await this.executeQuery(query, [values]); // 2차원 배열로 변환하여 전달
-            console.log("Messages saved to DB");
+            if(values[0].length !== 0){
+                await this.executeQuery(query, [values]); // 2차원 배열로 변환하여 전달
+                console.log("✅ Messages saved to DB");
+            }
         } catch (error) {
             console.error("saveMessages Repository Error :", error);
             throw error;
         }
     }
 
+    // 이전 대화 불러오기
     async createChatRoom({ title, cr_id } : { title : string, cr_id : string}) {
         const query = `
             INSERT INTO chatRoom (id, title)

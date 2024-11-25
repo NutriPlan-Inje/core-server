@@ -3,98 +3,196 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Socket.IO Chat Test Client</title>
+    <title>Socket.IO Chat</title>
     <script src="https://cdn.socket.io/4.0.1/socket.io.min.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
-            margin: 40px;
-            text-align: center;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
         }
+
+        .chat-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            padding: 10px;
+            background-color: #f0f0f0;
+        }
+
         #messages {
-            margin-top: 20px;
-            height: 300px;
+            flex: 1;
             overflow-y: auto;
+            margin-bottom: 10px;
+            padding: 10px;
+            background-color: #ffffff;
             border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        .input-container {
+            display: flex;
+            gap: 10px;
+        }
+
+        #messageInput {
+            flex: 1;
             padding: 10px;
-            background-color: #f9f9f9;
+            border: 1px solid #ccc;
+            border-radius: 5px;
         }
-        input, button {
-            margin-top: 10px;
-            padding: 10px;
-            width: 80%;
+
+        #sendBtn, #joinRoomBtn {
+            padding: 10px 20px;
+            border: none;
+            background-color: #007bff;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
         }
-        #sendBtn {
-            width: auto;
+
+        #sendBtn:hover, #joinRoomBtn:hover {
+            background-color: #0056b3;
         }
-        p {
+
+        .message {
+            max-width: 70%;
             margin: 5px 0;
+            padding: 10px;
+            border-radius: 10px;
+        }
+
+        .user-message {
+            align-self: flex-end; /* 사용자 메시지는 오른쪽 */
+            background-color: #e0f7fa;
+            text-align: right;
+        }
+
+        .bot-message {
+            align-self: flex-start; /* 챗봇 메시지는 왼쪽 */
+            background-color: #d1c4e9;
+            text-align: left;
+        }
+
+        #roomInfo {
+            font-size: 0.9em;
+            margin-bottom: 10px;
+            text-align: center;
+            color: #555;
+        }
+
+        .typing-indicator {
+            font-style: italic;
+            color: gray;
+            margin: 5px 0;
+            align-self: flex-start;
         }
     </style>
 </head>
 <body>
-    <h1>Chat Room Test Client</h1>
-
-    <div>
-        <button id="createRoomBtn">Create & Join Room</button>
+    <div class="chat-container">
+        <div id="roomInfo">Not connected to any room</div>
+        <button id="joinRoomBtn">Join Room</button>
+        <div id="messages"></div>
+        <div class="input-container">
+            <input type="text" id="messageInput" placeholder="Type your message..." />
+            <button id="sendBtn">Send</button>
+        </div>
     </div>
 
-    <div id="roomInfo"></div>
-
-    <div id="messages"></div>
-
-    <input type="text" id="messageInput" placeholder="Type your message" />
-    <button id="sendBtn">Send</button>
-
     <script>
-        // 정확한 URL로 설정
         const socket = io("http://3.38.175.70", { path: "/bot" });
-        //const socket = io("http://127.0.0.1:9000", { path: "/bot" });
 
+        const roomInfoDiv = document.getElementById("roomInfo");
         const messagesDiv = document.getElementById("messages");
         const messageInput = document.getElementById("messageInput");
-        const roomInfoDiv = document.getElementById("roomInfo");
+        const sendBtn = document.getElementById("sendBtn");
+        const joinRoomBtn = document.getElementById("joinRoomBtn");
 
-        let currentRoomId = null;
+        let currentRoomId = null; // 현재 가입된 방 ID
+        let typingIndicator = null; // "입력 중..." 메시지 DOM 요소
 
-        document.getElementById("createRoomBtn").addEventListener("click", () => {
-            socket.emit("create room");
+        // 방에 가입하기 버튼 클릭
+        joinRoomBtn.addEventListener("click", () => {
+            socket.emit("create room", {u_id : 6, date : "2024-11-21"}); // 방 생성 요청
+            appendMessage("🔄 Creating a room...", "bot");
         });
 
+        // 방 생성 이벤트 응답
         socket.on("room created", (data) => {
-            currentRoomId = data.cr_id;
-            socket.emit("join room", { cr_id: currentRoomId });
+            currentRoomId = data.cr_id; // 서버에서 받은 방 ID 저장
+            socket.emit("join room", { cr_id: currentRoomId }); // 방에 참여 요청
         });
 
+        // 방 참여 성공 이벤트
         socket.on("room joined", (data) => {
-            roomInfoDiv.innerHTML = `<p>Joined Room: ${data.cr_id}</p>`;
-            logMessage(`✅ Successfully joined room: ${data.cr_id}`);
+            currentRoomId = data.cr_id;
+            roomInfoDiv.textContent = `Joined Room: ${data.cr_id}`;
+            appendMessage(`✅ Successfully joined room: ${data.cr_id}`, "bot");
         });
 
-        document.getElementById("sendBtn").addEventListener("click", () => {
+        // 메시지 전송
+        sendBtn.addEventListener("click", () => {
             const msg = messageInput.value.trim();
             if (msg && currentRoomId) {
-                socket.emit("chat message", { roomId: currentRoomId, msg });
-                logMessage(`🧑‍💻 You: ${msg}`);
+                appendMessage("🧑‍💻 " + msg, "user");
+                showTypingIndicator(); // "입력 중..." 표시
+                socket.emit("chat message", { roomId: currentRoomId, msg, u_id : 6 });
                 messageInput.value = "";
             } else {
-                logMessage("⚠️ Please enter a message and ensure you're in a room.");
+                appendMessage("⚠️ Please enter a message and ensure you're in a room.", "bot");
             }
         });
 
+        // 서버에서 받은 메시지 표시
         socket.on("chat message", (data) => {
-            logMessage(`🤖 AI Bot: ${data.answer}`);
+            hideTypingIndicator(); // "입력 중..." 숨김
+            appendMessage("🤖 " + data.answer, "bot");
         });
 
+        // 오류 처리
         socket.on("error", (error) => {
-            logMessage(`❌ Error: ${error.message || error}`);
+            hideTypingIndicator(); // "입력 중..." 숨김
+            appendMessage("❌ Error: " + (error.message || error), "bot");
         });
 
-        function logMessage(message) {
-            const p = document.createElement("p");
-            p.textContent = message;
-            messagesDiv.appendChild(p);
-            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        // 메시지 표시 함수
+        function appendMessage(text, sender) {
+            const messageElement = document.createElement("div");
+            messageElement.textContent = text;
+            messageElement.classList.add("message");
+
+            if (sender === "user") {
+                messageElement.classList.add("user-message");
+            } else {
+                messageElement.classList.add("bot-message");
+            }
+
+            messagesDiv.appendChild(messageElement);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight; // 자동 스크롤
+        }
+
+        // "입력 중..." 표시
+        function showTypingIndicator() {
+            if (!typingIndicator) {
+                typingIndicator = document.createElement("div");
+                typingIndicator.textContent = "🤖 Bot is typing...";
+                typingIndicator.classList.add("typing-indicator");
+                messagesDiv.appendChild(typingIndicator);
+                messagesDiv.scrollTop = messagesDiv.scrollHeight; // 자동 스크롤
+            }
+        }
+
+        // "입력 중..." 숨김
+        function hideTypingIndicator() {
+            if (typingIndicator) {
+                messagesDiv.removeChild(typingIndicator);
+                typingIndicator = null;
+            }
         }
     </script>
 </body>
