@@ -3,4 +3,5 @@ export default interface MessageDTO{
     createAt : number;
     content : string; 
     sender_name : string;
+    u_id : number;
 }

@@ -105,7 +105,8 @@
     </div>
 
     <script>
-        const socket = io("http://3.38.175.70", { path: "/bot" });
+        //const socket = io("http://3.38.175.70", { path: "/bot" });
+        const socket = io("http://localhost:9000", { path: "/bot" });
 
         const roomInfoDiv = document.getElementById("roomInfo");
         const messagesDiv = document.getElementById("messages");

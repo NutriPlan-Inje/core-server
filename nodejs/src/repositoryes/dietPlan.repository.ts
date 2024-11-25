@@ -14,7 +14,7 @@ export default class DietPlanRepository extends Repository{
         try{
             const query : string = "SELECT * FROM userDietPlan WHERE DATE(date) = ? AND user_id = ? ORDER BY mealTime ASC";
             result = await this.executeQuery(query, [date, u_id]);
-        
+            console.log(result)
             return result;
         }catch (error) {
             console.error(error);

@@ -16,11 +16,12 @@ export default class ChatRepository extends Repository {
                 VALUES ?`;
 
             // MessageDTO[]를 (string | number)[][] 형식으로 변환
-            const values = messages.map(({ cr_id, createAt, content, sender_name }) => [
+            const values = messages.map(({ cr_id, createAt, content, sender_name, u_id }) => [
                 cr_id,
                 new Date(createAt * 1000).toISOString().slice(0, 19).replace('T', ' '),
                 content,
                 sender_name,
+                u_id
             ]);
             console.log(values[0]);
             if(values[0].length !== 0){

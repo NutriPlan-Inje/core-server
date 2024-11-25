@@ -39,8 +39,7 @@ export default async () => {
         redis.set('foodInfo', JSON.stringify(allFoodInfo))
         .then( () => console.log('✅ foodInfo Redis 저장 완료'))
         .catch( () => console.error('❌ foodInfo Redis 저장 실패'))
-        
-        const getFoodInfoToRedis = await redis.get('foodInfo');
+
 
         return pool;
     } catch (error) {
