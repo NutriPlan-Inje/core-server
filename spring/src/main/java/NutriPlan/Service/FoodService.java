@@ -10,6 +10,8 @@ import NutriPlan.model.Dto.FoodNutrientDto;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -20,11 +22,15 @@ import org.springframework.web.util.UriComponentsBuilder;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
+import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
+import org.xml.sax.helpers.DefaultHandler;
 
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.SAXParser;
+import javax.xml.parsers.SAXParserFactory;
 import java.io.ByteArrayInputStream;
 import java.io.StringReader;
 import java.net.URI;
@@ -39,6 +45,7 @@ import static java.lang.Integer.parseInt;
 
 
 @Service
+@EnableCaching
 public class FoodService {
 
 
@@ -60,6 +67,7 @@ public class FoodService {
     public FoodService(FoodInfoRepository foodInfoRepository) {
         this.foodInfoRepository = foodInfoRepository;
     }
+    @Cacheable(value = "foodSearchCache", key = "#foodName", unless = "#result == null || #result.isEmpty()")
     public List<FoodNutrientDto> searchFood(String foodName) throws Exception {
         RestTemplate restTemplate = new RestTemplate();
 
@@ -91,7 +99,7 @@ public class FoodService {
                 throw new RuntimeException("API 응답이 비어있습니다.");
             }
 
-            return parseXmlResponse(response);
+            return parseXmlResponseUsingSAX(response);
 
         } catch (Exception e) {
             System.err.println("API 호출 오류: " + e.getMessage());
@@ -100,45 +108,46 @@ public class FoodService {
         }
     }
 
-    private List<FoodNutrientDto> parseXmlResponse(String response) throws Exception {
+    private List<FoodNutrientDto> parseXmlResponseUsingSAX(String response) throws Exception {
         List<FoodNutrientDto> foodList = new ArrayList<>();
+        SAXParserFactory factory = SAXParserFactory.newInstance();
+        SAXParser saxParser = factory.newSAXParser();
 
-        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-        DocumentBuilder builder = factory.newDocumentBuilder();
-//        Document document = builder.parse(response);
+        DefaultHandler handler = new DefaultHandler() {
+            FoodNutrientDto currentFood = null;
+            StringBuilder content = new StringBuilder();
 
-        InputSource inputSource = new InputSource(new StringReader(response));
-        inputSource.setEncoding("UTF-8");
-        Document document = builder.parse(inputSource);
-
-        NodeList nodeList = document.getElementsByTagName("item");
-
-        for (int i = 0; i < nodeList.getLength(); i++) {
-            Node node = nodeList.item(i);
-
-            FoodNutrientDto dto = new FoodNutrientDto();
-
-            NodeList childNodes = node.getChildNodes();
-            for (int j = 0; j < childNodes.getLength(); j++) {
-                Node childNode = childNodes.item(j);
-
-                if ("FOOD_NM_KR".equals(childNode.getNodeName())) {
-                    dto.setFoodName(childNode.getTextContent());
-                } else if("SERVING_SIZE".equals(childNode.getNodeName())){
-                    dto.setServingSize(parseInt(childNode.getTextContent()));
-                } else if ("AMT_NUM1".equals(childNode.getNodeName())) {
-                    dto.setKcal(parseDouble(childNode.getTextContent()));
-                } else if("AMT_NUM7".equals(childNode.getNodeName()))  {
-                    dto.setCarbohydrate(parseDouble(childNode.getTextContent()));
-                } else if ("AMT_NUM3".equals(childNode.getNodeName())) {
-                    dto.setProtein(parseDouble(childNode.getTextContent()));
-                } else if ("AMT_NUM4".equals(childNode.getNodeName())) {
-                    dto.setFat(parseDouble(childNode.getTextContent()));
+            @Override
+            public void startElement(String uri, String localName, String qName, Attributes attributes) {
+                if ("item".equals(qName)) {
+                    currentFood = new FoodNutrientDto();
                 }
+                content.setLength(0);
             }
 
-            foodList.add(dto);
-        }
+            @Override
+            public void characters(char[] ch, int start, int length) {
+                content.append(ch, start, length);
+            }
+
+            @Override
+            public void endElement(String uri, String localName, String qName) {
+                if (currentFood == null) return;
+
+                switch (qName) {
+                    case "FOOD_NM_KR" -> currentFood.setFoodName(content.toString());
+                    case "SERVING_SIZE" -> currentFood.setServingSize(parseInt(content.toString()));
+                    case "AMT_NUM1" -> currentFood.setKcal(parseDouble(content.toString()));
+                    case "AMT_NUM7" -> currentFood.setCarbohydrate(parseDouble(content.toString()));
+                    case "AMT_NUM3" -> currentFood.setProtein(parseDouble(content.toString()));
+                    case "AMT_NUM4" -> currentFood.setFat(parseDouble(content.toString()));
+                    case "item" -> foodList.add(currentFood);
+                }
+            }
+        };
+
+        ByteArrayInputStream inputStream = new ByteArrayInputStream(response.getBytes(StandardCharsets.UTF_8));
+        saxParser.parse(inputStream, handler);
 
         return foodList;
     }
