@@ -1,7 +1,7 @@
 import { Router } from "express";
 import Container from "typedi";
 import { DietPlanController } from "../controllers/dietPlan.controller";
-import { cacheMiddleware } from "../middlewares/lru.middleware";
+import { cacheMiddleware } from "../middlewares/cache.middleware";
 
 export default ({ app } : { app : Router}) => {
     const route = Router();
