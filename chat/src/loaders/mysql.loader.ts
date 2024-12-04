@@ -30,17 +30,6 @@ export default async () => {
         console.log('MySQL 연결 성공!');
         connection.release();
 
-        //FoodInfo 캐시에 올리기
-        const redis = new Redis({
-            host : "redis",
-            port : 6379
-        });
-        const [allFoodInfo, field] = await connection.query(`SELECT * FROM foodInfo`);
-        redis.set('foodInfo', JSON.stringify(allFoodInfo))
-        .then( () => console.log('✅ foodInfo Redis 저장 완료'))
-        .catch( () => console.error('❌ foodInfo Redis 저장 실패'))
-
-
         return pool;
     } catch (error) {
         console.error('MySQL 연결 오류 : ',error); 
