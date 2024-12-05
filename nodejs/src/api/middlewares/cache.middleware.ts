@@ -21,7 +21,7 @@ export const cacheMiddleware = (keyGenerator: (req: Request) => string) => {
             const originalSend = res.json.bind(res);
             res.json = (body) => {
                 try {
-                    redisClient.set(cacheKey, JSON.stringify(body), "EX", 3600);
+                    redisClient.set(cacheKey, JSON.stringify(body), "EX", 1000 * 5); //5초 너무 오래하면 데이터 변경시 업뎃이 늦을 수도 있음
                     console.log("✅ Redis에 데이터 저장 완료!");
                 } catch (err) {
                     console.error("❌ Redis에 데이터 저장 실패:", err);

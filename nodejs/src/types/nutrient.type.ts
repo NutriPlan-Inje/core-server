@@ -10,6 +10,12 @@ type MacronutrientType = {
     fat : number;
 }
 
+type DailyTotalMacronutrientType = {
+    macronutrientRatio: MacronutrientType; 
+    eachKcal: EachKcal;
+};
+
+
 type RecomendMacronutrientType = {
     recomendCarbohydrate : number;
     recomendProtein : number;
@@ -37,4 +43,4 @@ type WeekMacronutrientSummary = {
     kcal : DailyKcal[];
 }
 
-export {EachKcal, MacronutrientType, RecomendMacronutrientType, EvaluateMacronutrient,  DailyMacronutrientSummary, WeekMacronutrientSummary, DailyKcal} ;
+export {EachKcal, MacronutrientType, DailyTotalMacronutrientType, RecomendMacronutrientType, EvaluateMacronutrient,  DailyMacronutrientSummary, WeekMacronutrientSummary, DailyKcal} ;
