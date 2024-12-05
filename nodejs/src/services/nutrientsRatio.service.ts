@@ -16,6 +16,67 @@ export class NutrientsRatioServie {
         @Inject( () => UserRepository ) private readonly userRepository : UserRepository
     ){}
 
+    async calculateMacronutrientRatioForDay({ u_id, date }: { u_id: number; date: string }): Promise<MacronutrientRatioResponseDTO> {
+        try {
+            const dietPlan: DietplanDTO[] = await this.dietPlanRepository.findDietPlanByDateAndUid({ date, u_id });
+            if (dietPlan.length === 0) {
+                throw new Error("can not found dietPlan");
+            }
+    
+            const eachKcal: EachKcal = await this.getEachKcal({ dietPlan });
+            const macronutrient : MacronutrientType = await this.getMacronutrient({ dietPlan });
+            const macronutrientRatio : MacronutrientType = this.getMacronutrientRatio({ macronutrient });
+    
+            const macronutrientRatioResponseDTO: MacronutrientRatioResponseDTO = {
+                statusCode: 200,
+                message: '계산을 완료했습니다',
+                data: {
+                    date: date,
+                    macronutrient: macronutrient,
+                    macronutrientRatio: macronutrientRatio,
+                    eachKcal: eachKcal,
+                },
+            };
+    
+            return macronutrientRatioResponseDTO;
+    
+        } catch (error) {
+            console.error(error);
+            return {
+                statusCode: 404,
+                message: '계산에 실패했습니다.',
+                data: null,
+            } as MacronutrientRatioResponseDTO;
+        }
+    }
+
+    async calculateMacronutrientRatioForWeek({ u_id, date }: { u_id: number, date: string }): Promise<MacronutrientRatioForWeekResponseDTO> {
+        try {
+            const {macronutrient, weekKcal} = await this.getMacronutrientAndWeekKcal({ u_id, date });
+            const macronutrientRatio: MacronutrientType = this.getMacronutrientRatioForWeek(macronutrient)
+    
+            const weekMacronutrientSummary: WeekMacronutrientSummary = {
+                macronutrientRatio,
+                kcal: weekKcal,
+            };
+
+            const macronutrientRatioForWeekResponseDTO : MacronutrientRatioForWeekResponseDTO = {
+                statusCode: 200,
+                message: "계산을 완료했습니다",
+                data: weekMacronutrientSummary,
+            }
+    
+            return macronutrientRatioForWeekResponseDTO;
+        } catch (error) {
+            console.error(error);
+            return {
+                statusCode: 404,
+                message: "계산에 실패했습니다",
+                data: null,
+            } as MacronutrientRatioForWeekResponseDTO;
+        }
+    }
+
     async evaluateMacronutrientIntakeForDay({ u_id, date } : { u_id : number, date : string}) : Promise<MacronutrientRatioForDayResponseDTO>{
         try{
             //섭취한 영양 + 유저의 기초대사량
@@ -53,68 +114,6 @@ export class NutrientsRatioServie {
                 message : "조회에 실패했습니다",
                 data :  null
             } as MacronutrientRatioForDayResponseDTO;
-        }
-    }
-
-    async calculateMacronutrientRatioForDay({ u_id, date }: { u_id: number; date: string }): Promise<MacronutrientRatioResponseDTO> {
-        try {
-            const dietPlan: DietplanDTO[] = await this.dietPlanRepository.findDietPlanByDateAndUid({ date, u_id });
-            if (dietPlan.length === 0) {
-                throw new Error("can not found dietPlan");
-            }
-    
-            const eachKcal: EachKcal = await this.getEachKcal({ dietPlan });
-            const macronutrient : MacronutrientType = await this.getMacronutrient({ dietPlan });
-            const macronutrientRatio : MacronutrientType = this.getMacronutrientRatio({ macronutrient });
-    
-            const macronutrientRatioResponseDTO: MacronutrientRatioResponseDTO = {
-                statusCode: 200,
-                message: '계산을 완료했습니다',
-                data: {
-                    date: date,
-                    macronutrient: macronutrient,
-                    macronutrientRatio: macronutrientRatio,
-                    eachKcal: eachKcal,
-                },
-            };
-    
-            return macronutrientRatioResponseDTO;
-    
-        } catch (error) {
-            console.error(error);
-            return {
-                statusCode: 404,
-                message: '계산에 실패했습니다.',
-                data: null,
-            } as MacronutrientRatioResponseDTO;
-        }
-    }
-
-    
-    async calculateMacronutrientRatioForWeek({ u_id, date }: { u_id: number, date: string }): Promise<MacronutrientRatioForWeekResponseDTO> {
-        try {
-            const {macronutrient, weekKcal} = await this.getMacronutrientAndWeekKcal({ u_id, date });
-            const macronutrientRatio: MacronutrientType = this.getMacronutrientRatioForWeek(macronutrient)
-    
-            const weekMacronutrientSummary: WeekMacronutrientSummary = {
-                macronutrientRatio,
-                kcal: weekKcal,
-            };
-
-            const macronutrientRatioForWeekResponseDTO : MacronutrientRatioForWeekResponseDTO = {
-                statusCode: 200,
-                message: "계산을 완료했습니다",
-                data: weekMacronutrientSummary,
-            }
-    
-            return macronutrientRatioForWeekResponseDTO;
-        } catch (error) {
-            console.error(error);
-            return {
-                statusCode: 404,
-                message: "계산에 실패했습니다",
-                data: null,
-            } as MacronutrientRatioForWeekResponseDTO;
         }
     }
 
