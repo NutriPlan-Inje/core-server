@@ -9,6 +9,42 @@ export default class DietPlanService {
         @Inject( () => DietPlanRepository) private readonly  dietPlanRepository :DietPlanRepository
     ){} 
 
+    async findDietPlanByDateAndUid( { date, u_id } : { date : string, u_id : number }) : Promise<DietPlanResponseDTO> {
+        try{
+            const dietPlans : DietPlanDTO[] = await this.dietPlanRepository.findDietPlanByDateAndUid({date, u_id});
+            if(dietPlans.length === 0){
+                throw new Error();
+            }
+
+            const dietPlanResponseDTO = this.getResponseData({ dietPlans });
+            return dietPlanResponseDTO;
+        } catch (error) {
+            console.error(error);
+            return {
+                statusCode : 404,
+                message : '조회에 실패했습니다',
+                data : []
+            } as DietPlanResponseDTO;
+        }
+    }
+
+    async deleteDietPlanById( { id } : { id : number }) : Promise<DeleteDietPlanResponseDTO>{
+        try{
+            await this.dietPlanRepository.deleteDietPlanById({ id });
+
+            return {
+                message : '삭제가 완료되었습니다',
+                statusCode : 200,
+            }
+        }catch (error) {
+            console.error(error);
+            return {
+                message : '삭제에 실패했습니다.',
+                statusCode : 404,
+            }
+        }
+    }
+
     private transformDateType = ({ dietPlans }: { dietPlans: DietPlanDTO[] }): DietPlanDTO[] => {
         const result = dietPlans.map((plan) => {
             const date = new Date(plan.date); // 기존 날짜 가져오기
@@ -33,31 +69,5 @@ export default class DietPlanService {
         return result;
     }
     
-    async findDietPlanByDateAndUid( { date, u_id } : { date : string, u_id : number }) : Promise<DietPlanResponseDTO> {
-        try{
-            const dietPlans : DietPlanDTO[] = await this.dietPlanRepository.findDietPlanByDateAndUid({date, u_id});
-            if(dietPlans.length === 0){
-                throw new Error();
-            }
-
-            const dietPlanResponseDTO = this.getResponseData({ dietPlans });
-            return dietPlanResponseDTO;
-        } catch (error) {
-            console.error(error);
-            return {
-                statusCode : 404,
-                message : '조회에 실패했습니다',
-                data : []
-            } as DietPlanResponseDTO;
-        }
-    }
-
-    async deleteDietPlanById( { id } : { id : number }) : Promise<DeleteDietPlanResponseDTO>{
-        await this.dietPlanRepository.deleteDietPlanById({ id });
-
-        return {
-            message : '삭제가 완료되었습니다',
-            statusCode : 200,
-        }
-    }
+    
 }
